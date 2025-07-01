@@ -82,9 +82,7 @@ const Zpayout = () => {
     fetchUserApi();
   }, [])
 
-
   console.log(userapi, "userApidataresponse");
-
 
   useEffect(() => {
     setModalVisible(true); // Page load hone pe modal open hoga
