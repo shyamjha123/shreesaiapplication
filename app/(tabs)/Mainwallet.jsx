@@ -69,15 +69,15 @@
 //     } else {
 //       Haptics.selectionAsync(); // lightest and fastest
 //     }
-  
+
 //     setSelectedEmojis((prev) => {
 //       const isSameEmoji = prev[itemId] === emoji;
 //       return { ...prev, [itemId]: isSameEmoji ? null : emoji };
 //     });
-  
+
 //     setShowEmojisId(null);
 //   };
- 
+
 //   const fetchDefaultTransactions = async () => {
 //     try {
 //       setLoading(true);
@@ -241,7 +241,7 @@
 //   const renderTransactionCard = ({ item }) => {
 //     const selectedEmoji = selectedEmojis[item.id];
 //     const showEmojis = showEmojisId === item.id;
-    
+
 //     // Calculate the correct debit amount for UI
 //     let debitAmount = parseFloat(item.tranAmt) || 0; // Default transaction amount
 
@@ -366,7 +366,7 @@
 //             </View>
 //             <Text style={styles.selectedDate}>{startDate || "Select"}</Text>
 //           </View>
-          
+
 //         </Pressable>
 //         <Pressable
 //           style={styles.dateButton}
@@ -559,10 +559,13 @@ const Mainwallet = () => {
   const [showEmojisId, setShowEmojisId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedEmojis, setSelectedEmojis] = useState({});
-  const [deletedEmojis, setDeletedEmojis] = useState({}); 
+  const [deletedEmojis, setDeletedEmojis] = useState({});
   const [emojiData, setEmojiData] = useState(null); // State to store emoji press data
   const [modetype, setModetype] = useState(''); // Assuming modetype is coming from elsewhere
   const [counter, setCounter] = useState(0); // Example state to refresh UI
+  const [userapi, setUserapi] = useState([]);
+  // 1. Define your “hide” list in lower‑case
+const hideBalanceIds = ["k00000060", "te00000056"];
   useEffect(() => {
     // Set up an interval to update the counter every second (simulate a page refresh)
     const intervalId = setInterval(() => {
@@ -579,10 +582,37 @@ const Mainwallet = () => {
   }, []);
 
 
+  const fetchUserApi = async () => {
+    const storedToken = await AsyncStorage.getItem("token");
+    try {
+      const response = await fetch(`https://zevopay.online/api/v1/user`, {
+        headers: {
+          // method:"GET",
+          Authorization: `Bearer ${storedToken}`,
+          "Content-Type": "application/json",
+        }
+      });
+      if (!response.ok) {
+        throw new error(`HTTP error! : status : ${response.status}`);
+      }
+      const data = await response.json();
+      setUserapi(data);
+      console.log(data.mode, "dataresponseofUser");
+    } catch (err) {
+      console.log(err, "err")
+    }
+
+  };
+
+  useEffect(() => {
+    fetchUserApi();
+  }, [])
+
+
   // const handleEmojiPress = async (emoji, itemId, modetype) => {
 
   //   console.log(modetype, "modetypehggg")
-    
+
   //   try {
   //     const token = await AsyncStorage.getItem("token");
   //     // 1. Haptics feedback
@@ -607,7 +637,7 @@ const Mainwallet = () => {
   //     const finalEmoji = isSameEmoji ? null : emoji;
 
   //     // https://zevopay.online//api/v1/wallet/reaction'
-      
+
   //     // const tokenstored = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsImVtYWlsIjoia2VlcmFuNzc3ODkwQGdtYWlsLmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzQ1NDk1MDY5LCJleHAiOjE3NDU0OTg2Njl9.JCC9MQeNr9VL1YZlr1hKbUUGhh1f-BH26UlUNrXfULk';
   //     const response = await fetch('https://zevopay.online/api/v1/wallet/reaction', {
   //       method: 'PATCH',
@@ -621,13 +651,13 @@ const Mainwallet = () => {
   //         reaction: finalEmoji
   //       }),
   //     });
-  
+
   //     if (!response.ok) {
   //       const errorData = await response.json();
   //       console.error('Server Error:', errorData);
   //       throw new Error('Failed to update emoji');
   //     }
-  
+
   //     const data = await response.json();
   //     console.log('Emoji updated on server:', data);
   //   } catch (error) {
@@ -678,7 +708,7 @@ const Mainwallet = () => {
 
       const data = await response.json();
       console.log('Emoji updated on server:', data);
-      
+
     } catch (error) {
       console.error('Error in handleEmojiPress:', error.message);
     }
@@ -907,13 +937,13 @@ const Mainwallet = () => {
             {/* ✅ Emoji display logic */}
             {(selectedEmoji !== undefined || item.reaction) && (
               <TouchableOpacity onPress={() => handleEmojiPress(selectedEmoji ?? item.reaction, item.id, item.type)}>
-              <Text style={styles.selectedEmoji}>
-                {selectedEmoji ?? item.reaction}
-              </Text>
-            </TouchableOpacity>
+                <Text style={styles.selectedEmoji}>
+                  {selectedEmoji ?? item.reaction}
+                </Text>
+              </TouchableOpacity>
             )}
-            
-          
+
+
             {showEmojis && (
               <Animatable.View animation="fadeInUp" duration={300} style={styles.emojiContainer}>
                 {emojis.map((emoji, index) => (
@@ -923,10 +953,12 @@ const Mainwallet = () => {
                 ))}
               </Animatable.View>
             )}
+           {!hideBalanceIds.includes(userapi?.userId?.toLowerCase()) && (
+  <Text style={styles.cardText}>
+    Remaining Balance: {item.calculatedBalance.toFixed(2)}
+  </Text>
+)}
 
-            <Text style={styles.cardText}>
-              Remaining Balance: {item.calculatedBalance.toFixed(2)}
-            </Text>
             <Text style={styles.carddate}>
               {new Date(item.updated_at).toLocaleString("en-US", {
                 month: "long",
@@ -983,6 +1015,7 @@ const Mainwallet = () => {
       </TouchableOpacity>
     );
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.rowContainer}>

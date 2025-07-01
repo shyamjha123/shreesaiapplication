@@ -312,6 +312,7 @@ const Login = () => {
       const dataresponse = await response.json();
       Alert.alert("Login Successful", "You are now logged in.");
       await AsyncStorage.setItem("token", dataresponse.token);
+      // console.log(dataresponse)
       router.push("/Mpin");
     } catch (error) {
       Alert.alert("Login Failed", error.message || "An error occurred. Please try again.");
