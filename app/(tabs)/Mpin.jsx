@@ -11,6 +11,7 @@ import React, { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Api from "../common/api/apiconfig";
 
 const Mpin = () => {
   // state 
@@ -44,74 +45,79 @@ const Mpin = () => {
     fetchToken();
   }, []);
 
-
   const handleVerify = async () => {
-    if (!state.mpin.trim()) {
-      Alert.alert("Error", "Please enter your MPIN.");
-      return;
-    }
-  
-    setState((prevState) => ({ ...prevState, loading: true }));
-  
-    try {
-      const fetchMpinVerification = fetch(
-        `https://zevopay.online/api/v1/user/verify-mpin`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${state.token}`,
-          },
-          body: JSON.stringify({ mpin: state.mpin.trim() }),
-        }
-      );
-  
-      const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Mpin Verification Failed")), 2000)
-      );
-  
-      // Race between API call and timeout
-      const response = await Promise.race([fetchMpinVerification, timeout]);
-  
-      const data = await response.json();
-      console.log(data, "dataaagya");
-  
-      if (response.ok) {
-        const { name, email, phone, virtual_account, status, address, aadharNumber, panNumber, state, shopName, shopAddress, gstNumber, businessPanNo, landlineNumber, landlineSTDCode, country } = data;
-  
-        await AsyncStorage.setItem("userName", name);
-        await AsyncStorage.setItem("userEmail", email);
-        await AsyncStorage.setItem("userPhone", phone);
-        await AsyncStorage.setItem("virtual_account", virtual_account);
-        await AsyncStorage.setItem("status", status);
-        await AsyncStorage.setItem("address", address);
-        await AsyncStorage.setItem("aadharNumber", aadharNumber);
-        await AsyncStorage.setItem("panNumber", panNumber);
-        await AsyncStorage.setItem("state", state);
-        await AsyncStorage.setItem("shopName", shopName);
-        await AsyncStorage.setItem("shopAddress", shopAddress);
-        await AsyncStorage.setItem("gstNumber", gstNumber);
-        await AsyncStorage.setItem("businessPanNo", businessPanNo);
-        await AsyncStorage.setItem("landlineNumber", landlineNumber);
-        await AsyncStorage.setItem("landlineSTDCode", landlineSTDCode);
-        await AsyncStorage.setItem("country", country);
+  if (!state.mpin.trim()) {
+    Alert.alert("Error", "Please enter your MPIN.");
+    return;
+  }
 
-  
-        Alert.alert("Success", "MPIN verified successfully!");
-        router.push("/Dashboard");
-      } else {
-        Alert.alert("Verification Failed", data.message || "Invalid MPIN.");
-      }
-    } catch (error) {
-      Alert.alert(
-        "Mpin Verification Failed",
-        error.message || "An error occurred during verification. Please try again."
-      );
-    } finally {
-      setState((prevState) => ({ ...prevState, loading: false }));
+  setState((prevState) => ({ ...prevState, loading: true }));
+
+  try {
+    const response = await fetch(Api.MPIN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${state.token}`,
+      },
+      body: JSON.stringify({ mpin: state.mpin.trim() }),
+    });
+
+    const data = await response.json();
+    console.log(data, "dataaagya");
+
+    if (response.ok) {
+      const {
+        name,
+        email,
+        phone,
+        virtual_account,
+        status,
+        address,
+        aadharNumber,
+        panNumber,
+        state,
+        shopName,
+        shopAddress,
+        gstNumber,
+        businessPanNo,
+        landlineNumber,
+        landlineSTDCode,
+        country,
+      } = data;
+
+      await AsyncStorage.setItem("userName", name);
+      await AsyncStorage.setItem("userEmail", email);
+      await AsyncStorage.setItem("userPhone", phone);
+      await AsyncStorage.setItem("virtual_account", virtual_account);
+      await AsyncStorage.setItem("status", status);
+      await AsyncStorage.setItem("address", address);
+      await AsyncStorage.setItem("aadharNumber", aadharNumber);
+      await AsyncStorage.setItem("panNumber", panNumber);
+      await AsyncStorage.setItem("state", state);
+      await AsyncStorage.setItem("shopName", shopName);
+      await AsyncStorage.setItem("shopAddress", shopAddress);
+      await AsyncStorage.setItem("gstNumber", gstNumber);
+      await AsyncStorage.setItem("businessPanNo", businessPanNo);
+      await AsyncStorage.setItem("landlineNumber", landlineNumber);
+      await AsyncStorage.setItem("landlineSTDCode", landlineSTDCode);
+      await AsyncStorage.setItem("country", country);
+
+      Alert.alert("Success", "MPIN verified successfully!");
+      router.push("/Dashboard");
+    } else {
+      Alert.alert("Verification Failed", data.message || "Invalid MPIN.");
     }
-  };
-  
+  } catch (error) {
+    Alert.alert(
+      "Mpin Verification Failed",
+      error.message || "An error occurred during verification. Please try again."
+    );
+  } finally {
+    setState((prevState) => ({ ...prevState, loading: false }));
+  }
+};
+
   return (
     <View style={styles.container}>
       <View style={styles.mpinContainer}>

@@ -9,7 +9,9 @@ import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
+
 import XLSX from "xlsx";
+import Api from "../common/api/apiconfig";
 
 const Payoutreport = () => {
     const [state, setState] = useState({
@@ -21,6 +23,10 @@ const Payoutreport = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [lastPage, setLastPage] = useState(1);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+
 
     useEffect(() => {
         fetchTransactions(); // Fetch transactions on component mount
@@ -35,21 +41,31 @@ const Payoutreport = () => {
     };
 
     const handleConfirm = (date) => {
-        const formattedDate = format(date, "MM-dd-yyyy");
         setState((prevState) => ({
             ...prevState,
             isDatePickerVisible: false,
-            [prevState.currentPicker === "from" ? "startDate" : "endDate"]: formattedDate,
+            [prevState.currentPicker === "from" ? "startDate" : "endDate"]: date,
         }));
     };
 
-    const fetchTransactions = async () => {
-        setLoading(true);
+    const fetchTransactions = async (useDateRange = false, page = 1) => {
+        if (page === 1) setLoading(true);
+        else setIsFetchingMore(true);
+    
         try {
             const token = await AsyncStorage.getItem("token");
-            const url = state.startDate && state.endDate
-                ? `https://zevopay.online/api/v1/wallet/transactions?start_date=${state.startDate}&end_date=${state.endDate}`
-                : `https://zevopay.online/api/v1/wallet/transactions`;
+            let url = `${Api.PAYOUTREPORT_URL}?page=${page}`;
+
+            if (state.startDate && state.endDate) {
+                const formattedStart = format(state.startDate, "yyyy-MM-dd");
+                console.log(formattedStart, "start");
+
+                const formattedEnd = format(state.endDate, "yyyy-MM-dd");
+                console.log(formattedEnd, "start");
+                url += `&startDate=${formattedStart}&endDate=${formattedEnd}`;
+                console.log(url, 'urlbase');
+
+            }
 
             const response = await fetch(url, {
                 method: "GET",
@@ -58,27 +74,82 @@ const Payoutreport = () => {
                     "Content-Type": "application/json",
                 },
             });
+
             const jsonResponse = await response.json();
+            console.log(jsonResponse, "payoutreportresponse");
 
-            console.log(jsonResponse, "jsonResponse");
-
-            if (jsonResponse && jsonResponse.data && Array.isArray(jsonResponse.data)) {
-                const filteredData = jsonResponse.data.filter((item) => item.type === "payout");
-                setTransactions(filteredData);
-
-                console.log(transactions, "transactionreport");
+            if (jsonResponse && Array.isArray(jsonResponse.data)) {
+                if (page === 1) {
+                    setTransactions(jsonResponse.data);
+                } else {
+                    setTransactions(prev => [...prev, ...jsonResponse.data]);
+                }
+                setCurrentPage(jsonResponse.meta.currentPage);
+                setLastPage(jsonResponse.meta.lastPage);
             } else {
-                setTransactions([]);
+                if (page === 1) setTransactions([]);
             }
         } catch (error) {
             console.error("Error fetching transactions:", error);
         } finally {
             setLoading(false);
+            setIsFetchingMore(false);
+        }
+    };
+
+    const fetchAllTransactions = async () => {
+        try {
+            const token = await AsyncStorage.getItem("token");
+            let page = 1;
+            let allTransactions = [];
+            let lastPage = 1;
+
+            do {
+                let url = `${Api.PAYOUTREPORT_URL}?page=${page}`;
+
+                if (state.startDate && state.endDate) {
+                    const formattedStart = format(state.startDate, "yyyy-MM-dd");
+                    const formattedEnd = format(state.endDate, "yyyy-MM-dd");
+                    url += `&startDate=${formattedStart}&endDate=${formattedEnd}`;
+                }
+
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const jsonResponse = await response.json();
+
+                if (jsonResponse && Array.isArray(jsonResponse.data)) {
+                    allTransactions = [...allTransactions, ...jsonResponse.data];
+                    lastPage = jsonResponse.meta.lastPage;
+                    page++;
+                } else {
+                    break;
+                }
+
+            } while (page <= lastPage);
+
+            return allTransactions;
+
+        } catch (error) {
+            console.error("Error fetching all transactions:", error);
+            return [];
+        }
+    };
+
+    const handleLoadMore = () => {
+        if (!isFetchingMore && currentPage < lastPage) {
+            fetchTransactions(true, currentPage + 1);
         }
     };
 
     const handleExport = async () => {
-        if (transactions.length === 0) {
+        const allTransactions = await fetchAllTransactions();
+        if (allTransactions.length === 0) {
             alert("No data to export");
             return;
         }
@@ -103,18 +174,22 @@ const Payoutreport = () => {
         // 🔹 Add an empty row to separate user info and transactions
         const emptyRow = [[]];
 
+        console.log(allTransactions, "transactiondetails");
+
+
         // 🔹 Prepare transaction data
         const exportData = [
-            ["Name", "Beneficiary Acc No", "IFSC Code", "Amount", "Remarks", "Status", "Transaction ID", "RRN NO", "Date"], // Headers
-            ...transactions.map((item) => [
-                item.beneficiaryName,
-                item.creditAccountNumber,
-                item.beneficiaryIFSC,
-                item.amount,
-                item.paymentDescription,
+            ["Sno", "Name", "Beneficiary Acc No", "IFSC Code", "Amount", "Remarks", "Status", "Transaction ID", "RRN NO", "Date"], // Headers
+            ...allTransactions.map((item, index) => [
+                index + 1,
+                item.beneficiaryName || "-",
+                item.creditAccountNumber || "-",
+                item.beneficiaryIFSC || "-",
+                Number(item.amount).toFixed(2) || "-",
+                item.paymentDescription || "-",
                 item.status,
                 ["SUCCESS", "PENDING", "FAILED"].includes(item.status) ? item.id : item.transactionID,
-                item.transactionReferenceNo,
+                item.transactionReferenceNo || "-",
                 new Intl.DateTimeFormat("en-GB", {
                     day: "2-digit",
                     month: "2-digit",
@@ -152,13 +227,15 @@ const Payoutreport = () => {
     };
 
     const handlePDFExport = async () => {
-        if (transactions.length === 0) {
+        const allTransactions = await fetchAllTransactions();
+
+        if (allTransactions.length === 0) {
             alert("No data to export");
             return;
         }
 
         const keys = [
-            "userName", "userEmail", "userPhone", "virtual_account", "status",
+             "userName", "userEmail", "userPhone", "virtual_account", "status",
             "address", "aadharNumber", "panNumber", "state", "shopName",
             "shopAddress", "gstNumber", "businessPanNo", "landlineNumber",
             "landlineSTDCode", "country"
@@ -170,14 +247,15 @@ const Payoutreport = () => {
             .map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`)
             .join("");
 
-        const transactionRows = transactions
-            .map((item) => {
+        const transactionRows = allTransactions
+            .map((item, index) => {
                 return `
                     <tr>
+                        <td>${index + 1}</td>
                         <td>${item.beneficiaryName || "-"}</td>
                         <td>${item.creditAccountNumber || "-"}</td>
                         <td>${item.beneficiaryIFSC || "-"}</td>
-                        <td>${item.amount || "-"}</td>
+                        <td>${Number(item.amount).toFixed(2) || "-"}</td>
                         <td>${item.paymentDescription || "-"}</td>
                         <td>${item.status || "-"}</td>
                         <td>${["SUCCESS", "PENDING", "FAILED"].includes(item.status) ? item.id : item.transactionID}</td>
@@ -229,6 +307,7 @@ const Payoutreport = () => {
                     <h2>Transaction Details</h2>
                     <table>
                         <tr>
+                        <th>Sno</th>
                             <th>Name</th>
                             <th>Beneficiary Acc No</th>
                             <th>IFSC</th>
@@ -266,10 +345,10 @@ const Payoutreport = () => {
                 <Text style={styles.cardText}>Name: {item.beneficiaryName}</Text>
                 <Text style={styles.cardText}>Beneficiary Acc No: {item.creditAccountNumber}</Text>
                 <Text style={styles.cardText}>IFSC Code: {item.beneficiaryIFSC}</Text>
-                <Text style={styles.cardText}>Amount: ₹{item.amount}</Text>
+                <Text style={styles.cardText}>Amount: ₹{Number(item.amount).toFixed(2)}</Text>
                 <Text style={styles.cardText}>
-                Remarks: {item.paymentDescription === "." ? "" : item.paymentDescription}
-              </Text>
+                    Remarks: {item.paymentDescription === "." ? "" : item.paymentDescription}
+                </Text>
                 <Text
                     style={[
                         styles.cardText,
@@ -304,7 +383,7 @@ const Payoutreport = () => {
                             <Text style={styles.dateText}>Date</Text>
                             <Text style={styles.dateText}>From</Text>
                         </View>
-                        <Text style={styles.selectedDate}>{state.startDate || "Select"}</Text>
+                        <Text style={styles.selectedDate}>  {state.startDate ? format(state.startDate, "MM-dd-yyyy") : "Select"}</Text>
                     </View>
                 </Pressable>
 
@@ -314,14 +393,13 @@ const Payoutreport = () => {
                             <Text style={styles.dateText}>Date</Text>
                             <Text style={styles.dateText}>To</Text>
                         </View>
-                        <Text style={styles.selectedDate}>{state.endDate || "Select"}</Text>
+                        <Text style={styles.selectedDate}>{state.endDate ? format(state.endDate, "MM-dd-yyyy") : "Select"}</Text>
                     </View>
                 </Pressable>
 
                 <Pressable onPress={fetchTransactions} style={styles.findButton}>
                     <Text style={styles.findButtonText}>FIND</Text>
                 </Pressable>
-
                 <Pressable onPress={() => setExportModalVisible(true)} style={styles.exportButton}>
                     <Text style={styles.findButtonText}>EXPORT</Text>
                 </Pressable>
@@ -334,7 +412,17 @@ const Payoutreport = () => {
                 onCancel={() => setState((prevState) => ({ ...prevState, isDatePickerVisible: false }))}
             />
             <View style={styles.cardContainer}>
-                {loading ? <ActivityIndicator size="large" color="#007BB5" /> : <FlatList data={transactions} renderItem={renderTransactionCard} />}
+                {loading ? <ActivityIndicator size="large" color="#007BB5" /> : <FlatList
+                    data={transactions}
+                    renderItem={renderTransactionCard}
+                    keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={
+                        isFetchingMore ? <ActivityIndicator size="small" color="#007BB5" /> : null
+                    }
+                />
+                }
             </View>
 
             <Modal

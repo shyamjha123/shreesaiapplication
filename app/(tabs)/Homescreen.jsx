@@ -34,7 +34,6 @@ const Homescreen = () => {
     require("../(tabs)/assests/ctc_resized.png"),
     require("../(tabs)/assests/hotel.png"),
     require("../(tabs)/assests/Bus.png"), // Update the path to your images
-
   ];
 
   // Auto-scroll effect
@@ -110,25 +109,13 @@ const Homescreen = () => {
       </View>
     );
   }
-
-
-
-  // const renderItem = (item) => (
-  //   <View style={styles.card}>
-  //     <Image source={{ uri: item.img }} style={styles.image} />
-  //   </View>
-  // );
-
-
-  // paymentDescription
-
   return (
     <ScrollView
       contentContainerStyle={styles.scrollViewContainer}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
-    >
+    >     
       <View style={styles.container}>
         <View style={styles.headercontainer}>
           <Link href="/Fundmanagement">
@@ -136,12 +123,11 @@ const Homescreen = () => {
               <Ionicons name="wallet" size={30} color="blue" />
               <View style={{ flexDirection: "column" }}>
                 <Text style={{ color: "blue" }}>Main Wallet</Text>
-                <Text style={{ color: "black" }}>₹ {walletData.balance}</Text>
+                <Text style={{ color: "black" }}>₹ {Number(walletData.balance).toFixed(2)}</Text>
               </View>
             </View>
           </Link>
           <View style={{ backgroundColor: "lightgray", width: 3 }}></View>
-
           <View style={styles.Aepswallet}>
             <Ionicons name="wallet" size={30} color="yellow" />
             <View style={{ flexDirection: "column" }}>
@@ -149,9 +135,7 @@ const Homescreen = () => {
               <Text style={{ color: "black" }}>₹ 0.00</Text>
             </View>
           </View>
-
         </View>
-
         <Swiper
           style={styles.swiper}
           autoplay
@@ -170,7 +154,6 @@ const Homescreen = () => {
         <View style={{ alignItems: "center", marginBottom: 500 }}>
           <Homescreencontainer />
         </View>
-
       </View>
     </ScrollView>
   );
@@ -202,10 +185,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   Mainwallet: {
-    // backgroundColor:"red",
     flexDirection: "row",
-    // marginBottom:-10,
-    // marginTop:-1,
     gap: 10,
     alignItems: "center",
   },

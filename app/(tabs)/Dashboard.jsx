@@ -32,6 +32,7 @@ import Help from "./Help";
 import { Link, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Api from "../common/api/apiconfig";
 // import { useInactivityHandler } from "./InactivityHandler";
 
 const Tab = createBottomTabNavigator();
@@ -103,10 +104,7 @@ const TabNavigator = () => {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-
     </Tab.Navigator>
-
-
   );
 };
 
@@ -123,7 +121,7 @@ const CustomDrawerContent = (props) => {
           return;
         }
 
-        const response = await fetch(`https://zevopay.online/api/v1/user`, {
+        const response = await fetch(Api.USER_URL, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`, // Pass the token in Authorization header
@@ -210,8 +208,6 @@ const Dashboard = () => {
 
   // console.log(profileData.name, "nameofuser")
   return (
-
-
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={({ route, navigation }) => ({
@@ -235,6 +231,7 @@ const Dashboard = () => {
           </Pressable>
         ),
         headerTitle: () => (
+          
           <View style={styles.headerTitleContainer}>
 
             <Text style={styles.headerText}>{route.name}</Text>

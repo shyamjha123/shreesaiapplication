@@ -15,6 +15,7 @@ import profilelogo from "../(tabs)/assests/profilelogo.jpeg"
 import NewLogo from "../(tabs)/assests/newlogo.png"
 import { Formik } from "formik";
 import * as Yup from "yup";
+import Api from "../common/api/apiconfig";
 
 // Define validation schema with Yup
 const validationSchema = Yup.object().shape({
@@ -30,11 +31,12 @@ const Forgotpassword = () => {
   const handleForgotpassword = async (values) => {
     const { email } = values;
     setIsSubmitting(true);
+console.log(Api.FORGOTPASSWORD_URL);
 
     try {
       // Send POST request to the API
       const response = await fetch(
-        `https://zevopay.online/api/v1/auth/forgot-password?role=user`,
+        `${Api.FORGOTPASSWORD_URL}?role=user`,
         {
           method: "POST",
           headers: {

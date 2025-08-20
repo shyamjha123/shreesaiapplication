@@ -21,9 +21,10 @@ import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Formik } from "formik";
 import * as Yup from "yup";
+import Api from "../common/api/apiconfig";
 
 // Validation schema
-// Validation schema
+
 const validationSchema = Yup.object().shape({
   accountNumber: Yup.string().required("Account Number is required"),
   ifscCode: Yup.string().required("IFSC Code is required"),
@@ -39,7 +40,6 @@ const validationSchema = Yup.object().shape({
 const Zpayout = () => {
   const router = useRouter();
   const navigation = useNavigation();
-
   const [modalVisible, setModalVisible] = useState(false);
   const [mpinModal, setmpinModal] = useState(false);
   const [mpin, setMpin] = useState(""); // Store MPIN input
@@ -51,13 +51,11 @@ const Zpayout = () => {
   const [userapi, setUserapi] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0); // State to trigger re-render
 
-
   // user Api 
-
   const fetchUserApi = async () => {
     const storedToken = await AsyncStorage.getItem("token");
     try {
-      const response = await fetch(`https://zevopay.online/api/v1/user`, {
+      const response = await fetch(Api.USER_URL, {
         headers: {
           // method:"GET",
           Authorization: `Bearer ${storedToken}`,
@@ -69,20 +67,14 @@ const Zpayout = () => {
       }
       const data = await response.json();
       setUserapi(data);
-      console.log(data.mode, "dataresponseofUser");
     } catch (err) {
-
       console.log(err, "err")
-
     }
-
   };
 
   useEffect(() => {
     fetchUserApi();
   }, [])
-
-  console.log(userapi, "userApidataresponse");
 
   useEffect(() => {
     setModalVisible(true); // Page load hone pe modal open hoga
@@ -111,7 +103,6 @@ const Zpayout = () => {
     setModalVisible(true); // Page load hone pe modal open hoga
   }, []);
 
-
   useEffect(() => {
     if (formValues) {
       setmpinModal(true);
@@ -125,7 +116,6 @@ const Zpayout = () => {
     }
   };
 
-
   const openMpinModal = (values, resetForm) => {
     console.log("Opening MPIN Modal..."); // Debug log
 
@@ -136,7 +126,6 @@ const Zpayout = () => {
       setmpinModal(true); // ✅ Open MPIN modal after a small delay
     }, 100);
   };
-
 
   const handleApiCall = async (resetForm) => {
     if (!formValues) {
@@ -155,7 +144,7 @@ const Zpayout = () => {
       const email = await AsyncStorage.getItem("userEmail");
       const phone = await AsyncStorage.getItem("userPhone");
       const Name = await AsyncStorage.getItem("userName");
-      const response = await fetch("https://zevopay.online/api/v1/webhook/payout", {
+      const response = await fetch(Api.PAYOUT_URL, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -181,7 +170,6 @@ const Zpayout = () => {
       });
 
       const result = await response.text();
-      console.log("API Response:", result);
 
       try {
         const jsonData = JSON.parse(result);
@@ -219,8 +207,6 @@ const Zpayout = () => {
         { text: "OK", onPress: () => setmpinModal(false) } // Close MPIN modal on error
       ]);
     }
-
-
   };
 
   const handleMpinVerification = async (mpin) => {
@@ -237,16 +223,14 @@ const Zpayout = () => {
     }
 
     setLoading(true); // Start loading
-
     const payload = { mpin: mpin.trim() };
-
     try {
       const timeout = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("MPIN verification failed. Please try again.")), 2000)
       );
 
       const mpinResponse = await Promise.race([
-        fetch("https://zevopay.online/api/v1/user/verify-mpin", {
+        fetch(Api.MPIN_URL, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -278,16 +262,10 @@ const Zpayout = () => {
   };
 
   const Mode = userapi.mode || null;
-
   let Modeselection = null;
-
   if (Mode === "NEFT" || Mode === "RTGS" || Mode === "NEFT / RTGS") {
     Modeselection = Mode;
   }
-
-  console.log(Modeselection, "mode")
-
-  console.log(userapi?.status, "aagyere")
   return (
     <SafeAreaView style={styles.container}>
       {/* MPIN Verification Modal */}
@@ -349,7 +327,6 @@ const Zpayout = () => {
                 <Picker.Item label={Modeselection} value={Modeselection} />
               )}
 
-
             </Picker>
           </View>
         </View>
@@ -371,19 +348,10 @@ const Zpayout = () => {
             }}
             validationSchema={validationSchema}
             onSubmit={async (values, { resetForm }) => {
-              // if (userapi?.status === "IN_ACTIVE") {
-              //   await AsyncStorage.removeItem("token");
-              //   navigation.reset({
-              //     index: 0,
-              //     routes: [{ name: "Login" }],
-              //   });
-              //   return;
-              // }
-
               try {
                 const token = await AsyncStorage.getItem("token");
 
-                const res = await fetch("https://zevopay.online/api/v1/user", {
+                const res = await fetch(Api.USER_URL, {
                   headers: {
                     Authorization: `Bearer ${token}`,
                   },

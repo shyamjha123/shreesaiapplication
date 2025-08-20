@@ -11,7 +11,6 @@ export const dummyPayoutdata = [
         "DatePresent": Date.now(),
 
     },       
-
     {
         "Name": "Kamal",
         "Beneficiary": 12311313456446855,
@@ -22,7 +21,6 @@ export const dummyPayoutdata = [
         "TransactionDate": Date.now(),
 
     },
-
     {
         "Name": "Gopal Bhati",
         "Beneficiary": 123113134564465999,
@@ -32,7 +30,6 @@ export const dummyPayoutdata = [
         "RRNNO": 544545540121,
         "TransactionDate": Date.now(),
     },
-
     {
         "Name": "Satish Ramani",
         "Beneficiary": 123113134564465111,
@@ -42,7 +39,6 @@ export const dummyPayoutdata = [
         "RRNNO": 54454554545,
         "TransactionDate": Date.now(),
     },
-
     {
         "Name": "Mohan Roy",
         "Beneficiary": 123113134564465051,
@@ -52,8 +48,6 @@ export const dummyPayoutdata = [
         "RRNNO": 54454554123,
         "TransactionDate": Date.now(),
     },
-
-
     {
         "Name": "Deepak Ramani",
         "Beneficiary": 123113134564465989,
@@ -63,8 +57,6 @@ export const dummyPayoutdata = [
         "RRNNO": 54454554480,
         "TransactionDate": Date.now(),
     },
-
-
     {
         "Name": "komal Agarwal",
         "Beneficiary": 123113134564465880,

@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  TouchableWithoutFeedback,
   Pressable,
   RefreshControl,
   FlatList,
@@ -14,9 +13,9 @@ import {
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { format } from "date-fns";
-import Icon from 'react-native-vector-icons/FontAwesome';
 import * as Haptics from 'expo-haptics';
 import * as Animatable from 'react-native-animatable';
+import Api from "../common/api/apiconfig";
 
 
 // const QUICK_EMOJIS = ["😀", "😍", "👍", "😂", "😢", "🎉"];
@@ -42,8 +41,9 @@ const Mainwallet = () => {
   const [modetype, setModetype] = useState(''); // Assuming modetype is coming from elsewhere
   const [counter, setCounter] = useState(0); // Example state to refresh UI
   const [userapi, setUserapi] = useState([]);
+  const {USER_URL,REACTION_URL,TRANSACTION_URL } = Api;
   // 1. Define your “hide” list in lower‑case
-const hideBalanceIds = ["k00000060", "te00000056"];
+   const hideBalanceIds = ["k00000060", "te00000056"];
   useEffect(() => {
     // Set up an interval to update the counter every second (simulate a page refresh)
     const intervalId = setInterval(() => {
@@ -59,11 +59,10 @@ const hideBalanceIds = ["k00000060", "te00000056"];
     fetchDefaultTransactions();
   }, []);
 
-
   const fetchUserApi = async () => {
     const storedToken = await AsyncStorage.getItem("token");
     try {
-      const response = await fetch(`https://zevopay.online/api/v1/user`, {
+      const response = await fetch(USER_URL, {
         headers: {
           // method:"GET",
           Authorization: `Bearer ${storedToken}`,
@@ -107,7 +106,7 @@ const hideBalanceIds = ["k00000060", "te00000056"];
       const isSameEmoji = selectedEmojis[itemId] === emoji;
       const finalEmoji = isSameEmoji ? null : emoji;
 
-      const response = await fetch('https://zevopay.online/api/v1/wallet/reaction', {
+      const response = await fetch(REACTION_URL, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -152,7 +151,7 @@ const hideBalanceIds = ["k00000060", "te00000056"];
       }
 
       const response = await fetch(
-        "https://zevopay.online/api/v1/wallet/transactions",
+        TRANSACTION_URL,
         {
           method: "GET",
           headers: {
@@ -225,10 +224,9 @@ const hideBalanceIds = ["k00000060", "te00000056"];
         Alert.alert("Error", "User not authenticated. Token is missing.");
         return;
       }
-      // const token = await AsyncStorage.getItem("token");
-      // const tokenstored = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsImVtYWlsIjoia2VlcmFuNzc3ODkwQGdtYWlsLmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzQ1NDkxMTQ3LCJleHAiOjE3NDU0OTQ3NDd9.vMmRDxtKfLrbxuHCoV3EP4_gamJPEGWE_2CkgLXcOes';
+
       const response = await fetch(
-        `https://zevopay.online/api/v1/wallet/transactions?start_date=${startDate}&end_date=${endDate}`,
+        `${TRANSACTION_URL}?start_date=${startDate}&end_date=${endDate}`,
         {
           method: "GET",
           headers: {
@@ -296,15 +294,15 @@ const hideBalanceIds = ["k00000060", "te00000056"];
       }
 
 
-      // ✅ Condition for refunded payouts (amount should be credited back)
+      //  Condition for refunded payouts (amount should be credited back)
       if (transaction.type === "payout" && transaction.status === "REFUNDED") {
         const refundAmount = parseFloat(transaction.amount || 0);
         const surcharge = parseFloat(transaction.surchargeAmount || 0);
         creditAmount = refundAmount + surcharge;
-        currentBalance += creditAmount;  // ✅ ADD BACK TO OVERALL BALANCE
+        currentBalance += creditAmount;  //  ADD BACK TO OVERALL BALANCE
       }
 
-      // ✅ Regular balance updates
+      //  Regular balance updates
       if (transaction.mode === "CASH DEBIT" || (transaction.type === "payout" && transaction.status !== "REFUNDED")) {
         currentBalance -= debitAmount;
       } else {
@@ -314,7 +312,7 @@ const hideBalanceIds = ["k00000060", "te00000056"];
       return { ...transaction, calculatedBalance: currentBalance };
     });
 
-    // ✅ Reverse back to original order so latest remains on top
+    //  Reverse back to original order so latest remains on top
     return updatedTransactions.reverse();
   };
 
@@ -326,7 +324,7 @@ const hideBalanceIds = ["k00000060", "te00000056"];
     // Calculate the correct debit amount for UI
     let debitAmount = parseFloat(item.tranAmt) || 0; // Default transaction amount
 
-    // ✅ Updated condition: Only calculate if type === "payout" and status !== "REFUNDED"
+    //  Updated condition: Only calculate if type === "payout" and status !== "REFUNDED"
     if (item.type === "payout" && item.status !== "REFUNDED") {
       const payoutAmount = parseFloat(item.amount || 0);
       const surcharge = item.surchargeAmount || 0;
@@ -337,15 +335,14 @@ const hideBalanceIds = ["k00000060", "te00000056"];
       debitAmount = payoutAmount + surcharge;
     }
 
-    // ✅ New condition: If type === "payout" && status === "REFUNDED", credit should be amount + surchargeAmount
+    //  New condition: If type === "payout" && status === "REFUNDED", credit should be amount + surchargeAmount
     let creditAmount = parseFloat(item.tranAmt) || 0;
     if (item.type === "payout" && item.status === "REFUNDED") {
       const refundAmount = parseFloat(item.amount || 0);
       const surcharge = parseFloat(item.surchargeAmount || 0);
       creditAmount = refundAmount + surcharge;
-    }
+    };
 
-    console.log(selectedEmoji, "selectedEmoji")
     return (
       <TouchableOpacity activeOpacity={0.9}
         onPress={() => setShowEmojisId(item.id)}
@@ -354,7 +351,7 @@ const hideBalanceIds = ["k00000060", "te00000056"];
         <View style={styles.card}>
 
           <View style={{ flexDirection: "column" }}>
-            {/* ✅ Emoji display logic */}
+            {/*  Emoji display logic */}
             {(selectedEmoji !== undefined || item.reaction) && (
               <TouchableOpacity onPress={() => handleEmojiPress(selectedEmoji ?? item.reaction, item.id, item.type)}>
                 <Text style={styles.selectedEmoji}>
@@ -362,8 +359,6 @@ const hideBalanceIds = ["k00000060", "te00000056"];
                 </Text>
               </TouchableOpacity>
             )}
-
-
             {showEmojis && (
               <Animatable.View animation="fadeInUp" duration={300} style={styles.emojiContainer}>
                 {emojis.map((emoji, index) => (
@@ -450,7 +445,6 @@ const hideBalanceIds = ["k00000060", "te00000056"];
             </View>
             <Text style={styles.selectedDate}>{startDate || "Select"}</Text>
           </View>
-
         </Pressable>
         <Pressable
           style={styles.dateButton}
@@ -481,7 +475,6 @@ const hideBalanceIds = ["k00000060", "te00000056"];
         onConfirm={handleConfirm}
         onCancel={hideDatePicker}
       />
-
       <View style={{ width: "100%", flex: 1, backgroundColor: "lightgray" }}>
         <FlatList
           data={transactions}
@@ -559,43 +552,35 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 5,
-    // flexWrap: "wrap",
+
   },
   cardText: {
     color: "#007BB5",
     fontSize: 15,
     fontWeight: "700",
     marginBottom: 5,
-    // flexShrink: 1,
   },
   narrationtext: {
     color: "gray",
     fontSize: 14,
     marginBottom: 5,
-    // flexShrink: 1,
+
   },
   carddate: {
     color: "#007BB5",
     fontSize: 16,
-    // flexShrink: 1,
+
   },
   selectedEmoji: {
     fontSize: 15,
-    // marginTop: 20,
+
   },
   emojiContainer: {
-    // flexDirection: 'row',
-    // // marginTop: 20,
-    // backgroundColor: '#eee',
-    // borderRadius: 10,
-    // padding: 10,
-
     flexDirection: 'row',
     backgroundColor: '#f0f0f0',
     padding: 10,
     borderRadius: 25,
     marginTop: -15,
-    // alignSelf: 'flex-start',
     elevation: 5,
     shadowColor: '#000',
     shadowOpacity: 0.2,
@@ -609,40 +594,6 @@ const styles = StyleSheet.create({
 });
 
 export default Mainwallet;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
