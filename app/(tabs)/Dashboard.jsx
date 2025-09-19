@@ -24,11 +24,8 @@ import ProfileScreen from "./ProfileScreen";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 // import Profile from "./assests/profile.png";
 import Mainwallet from "./Mainwallet";
-import NewLogo from "../(tabs)/assests/newlogo.png"
+import Funding from '../(tabs)/Funding';
 import profilelogo from "../(tabs)/assests/profilelogo.jpeg"
-import Wallet from "../(tabs)/Wallet";
-import Topup from "./Topup";
-import Help from "./Help";
 import { Link, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -44,15 +41,16 @@ const CustomTabBarLabel = ({ label, onPress }) => (
   </Pressable>
 );
 
+// tab navigator 
 const TabNavigator = () => {
 
   const router = useRouter();
   return (
 
     <Tab.Navigator
-    
+
       screenOptions={({ route }) => ({
-        
+
         headerShown: false,
         tabBarStyle: {
           backgroundColor: "white",
@@ -231,7 +229,7 @@ const Dashboard = () => {
           </Pressable>
         ),
         headerTitle: () => (
-          
+
           <View style={styles.headerTitleContainer}>
 
             <Text style={styles.headerText}>{route.name}</Text>
@@ -277,6 +275,22 @@ const Dashboard = () => {
           ),
         }}
       />
+
+      <Drawer.Screen
+        name="Fund request"
+        component={Funding} // Set to null to use custom component
+        options={{
+          drawerIcon: ({ focused, color, size }) => (
+            <Ionicons name={"wallet"} size={size} color={"gray"} />
+          ),
+          drawerLabel: () => (
+            <Pressable onPress={() => router.push("/(tabs)/Funding")}>
+              <Text style={styles.drawerLabel}>Fund Request</Text>
+            </Pressable>
+          ),
+        }}
+      />
+
 
       <Drawer.Screen
         name="Reports"

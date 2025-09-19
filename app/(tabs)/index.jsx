@@ -1,6 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, SafeAreaView } from "react-native";
 import Login from "../(tabs)/Login";
+
+
 const index = () => {
   return (
     <SafeAreaView style={styles.container}>

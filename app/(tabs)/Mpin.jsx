@@ -70,6 +70,7 @@ const Mpin = () => {
       const {
         name,
         email,
+        userId,
         phone,
         virtual_account,
         status,
@@ -88,6 +89,7 @@ const Mpin = () => {
 
       await AsyncStorage.setItem("userName", name);
       await AsyncStorage.setItem("userEmail", email);
+       await AsyncStorage.setItem("userId", userId);
       await AsyncStorage.setItem("userPhone", phone);
       await AsyncStorage.setItem("virtual_account", virtual_account);
       await AsyncStorage.setItem("status", status);

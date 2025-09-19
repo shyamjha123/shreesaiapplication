@@ -403,6 +403,7 @@ const Upitransactionreport = () => {
       />
 
       <View style={{ width: "100%", flex: 1, backgroundColor: "lightgray" }}>
+      
         <FlatList
           data={transactions}
           keyExtractor={(item) => item.id.toString()}
