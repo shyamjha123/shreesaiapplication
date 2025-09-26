@@ -170,6 +170,17 @@ export default function TabLayout() {
           headerTintColor: "#fff", // Optional: Set text color to white for better contrast
         }}
       />
+
+      <Stack.Screen
+        name="NewvirtualReport"
+        options={{
+          headerShown: true, // Show header for this screen
+          headerStyle: {
+            backgroundColor: "#4A90E2", // Set the background color to blue
+          },
+          headerTintColor: "#fff", // Optional: Set text color to white for better contrast
+        }}
+      />
       <Stack.Screen
         name="Dmtreport"
         options={{

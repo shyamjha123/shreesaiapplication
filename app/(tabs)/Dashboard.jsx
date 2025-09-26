@@ -25,11 +25,13 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 // import Profile from "./assests/profile.png";
 import Mainwallet from "./Mainwallet";
 import Funding from '../(tabs)/Funding';
+import Report from '../(tabs)/Report';
 import profilelogo from "../(tabs)/assests/profilelogo.jpeg"
 import { Link, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Api from "../common/api/apiconfig";
+
 // import { useInactivityHandler } from "./InactivityHandler";
 
 const Tab = createBottomTabNavigator();
@@ -294,7 +296,7 @@ const Dashboard = () => {
 
       <Drawer.Screen
         name="Reports"
-        component={TabNavigator}
+        component={Report}
         options={{
           drawerIcon: ({ focused, color, size }) => (
             <Ionicons

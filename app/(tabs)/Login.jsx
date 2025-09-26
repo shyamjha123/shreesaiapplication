@@ -54,11 +54,12 @@ const Login = () => {
   //  console.log(Api.LOGIN_URL);
    
     const { email, password } = values;
+    const shrisai = "1.1.8";
     try {
       const response = await fetch(Api.LOGIN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password  }),
       });
 
       const dataresponse = await response.json();

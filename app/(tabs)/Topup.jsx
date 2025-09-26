@@ -20,6 +20,7 @@ const Topup = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.inputContainer}>
           <Ionicons name="call" size={30} color="gray" style={styles.icon} />
+          
           <TextInput
             style={styles.input}
             placeholder="Mobile Number"

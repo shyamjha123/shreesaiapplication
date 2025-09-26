@@ -7,10 +7,19 @@ const Report = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+
+        <CommonCards
+          onPress={() => router.push("/NewvirtualReport")}
+          iconname={"wallet-outline"}
+          color={"#007BB5"}
+          text={"New Virtual Report"}
+          footertext={"Track your virtual report"}
+        />
+
         <CommonCards
           onPress={() => router.push("/Dmtreport")}
         />
-        
+
         <CommonCards
           onPress={() => router.push("/Payoutreport", { customTitle: "My Payout History" })}
           iconname={"wallet-outline"}
@@ -26,7 +35,7 @@ const Report = () => {
           text={"UPI Transaction Report"}
           footertext={"Check your UPI transactions here"}
         />
-  
+
       </ScrollView>
     </View>
   );

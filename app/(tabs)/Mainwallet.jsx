@@ -41,9 +41,9 @@ const Mainwallet = () => {
   const [modetype, setModetype] = useState(''); // Assuming modetype is coming from elsewhere
   const [counter, setCounter] = useState(0); // Example state to refresh UI
   const [userapi, setUserapi] = useState([]);
-  const {USER_URL,REACTION_URL,TRANSACTION_URL } = Api;
+  const { USER_URL, REACTION_URL, TRANSACTION_URL } = Api;
   // 1. Define your “hide” list in lower‑case
-   const hideBalanceIds = ["k00000060", "te00000056"];
+  const hideBalanceIds = ["k00000060", "te00000056"];
   useEffect(() => {
     // Set up an interval to update the counter every second (simulate a page refresh)
     const intervalId = setInterval(() => {
@@ -58,6 +58,8 @@ const Mainwallet = () => {
     // Fetch default data on component mount
     fetchDefaultTransactions();
   }, []);
+
+
 
   const fetchUserApi = async () => {
     const storedToken = await AsyncStorage.getItem("token");
@@ -280,6 +282,12 @@ const Mainwallet = () => {
       let debitAmount = 0;
       let creditAmount = parseFloat(transaction.tranAmt) || 0;
 
+      // ✅ For HDFC_VA transactions → use amount.d[0]
+      if (transaction.type === "HDFC_VA" && transaction.amount?.d?.length > 0) {
+        creditAmount = parseFloat(transaction.amount.d[0]);
+        currentBalance += creditAmount;
+      }
+
       // ✅ Condition for normal debit transactions
       if (transaction.mode === "CASH DEBIT") {
         debitAmount = parseFloat(transaction.tranAmt);
@@ -335,13 +343,17 @@ const Mainwallet = () => {
       debitAmount = payoutAmount + surcharge;
     }
 
+
     //  New condition: If type === "payout" && status === "REFUNDED", credit should be amount + surchargeAmount
     let creditAmount = parseFloat(item.tranAmt) || 0;
+
     if (item.type === "payout" && item.status === "REFUNDED") {
       const refundAmount = parseFloat(item.amount || 0);
       const surcharge = parseFloat(item.surchargeAmount || 0);
       creditAmount = refundAmount + surcharge;
-    };
+    } else if (item.type === "HDFC_VA" && item.amount?.d?.length > 0) {
+      creditAmount = parseFloat(item.amount.d[0]); // Use amount.d[0]
+    }
 
     return (
       <TouchableOpacity activeOpacity={0.9}
@@ -368,11 +380,11 @@ const Mainwallet = () => {
                 ))}
               </Animatable.View>
             )}
-           {!hideBalanceIds.includes(userapi?.userId?.toLowerCase()) && (
-  <Text style={styles.cardText}>
-    Remaining Balance: {item.calculatedBalance.toFixed(2)}
-  </Text>
-)}
+            {!hideBalanceIds.includes(userapi?.userId?.toLowerCase()) && (
+              <Text style={styles.cardText}>
+                Remaining Balance: {item.calculatedBalance.toFixed(2)}
+              </Text>
+            )}
 
             <Text style={styles.carddate}>
               {new Date(item.updated_at).toLocaleString("en-US", {
@@ -386,31 +398,33 @@ const Mainwallet = () => {
             </Text>
             <Text style={styles.narrationtext}>
               {
-
-                item.type === "payout" && item.status !== "REFUNDED" // Only for 'payout' type and status not 'REFUNDED'
-                  ? item.transactionReferenceNo
-                    ? `Payout First / ${item.transactionReferenceNo} / ${item.id}` // If transactionReferenceNo exists
-                    : item.errorMessage && item.errorMessage.includes(":") // Check if errorMessage exists and includes ":"
-                      ? `Payout First / ${item.errorMessage.split(":")[1]?.trim()} / ${item.id
-                      }` // If errorMessage has a colon
-                      : `Payout First / ${item.errorMessage ? item.errorMessage : "PENDING"
-                      } / ${item.id}` // If no colon in errorMessage
-                  : item.type === "payout" && item.status === "REFUNDED" // If type is 'payout' and status is 'REFUNDED'
-                    ? `Payout Refunded / ${item.paymentDescription} / ${item.transactionID}` // Add paymentDescription in the narration for refunded payouts
-                    : item.mode === "UPI"
-                      ? `Add Amt By UPI / ${item.utr}`
-                      : item.mode === "IMPS"
-                        ? `Add Amt By virtual A/C / IMPS / ${item.Sender_receiver_info?.split("/")[1]
-                        }`
-                        : item.mode === "NEFT"
-                          ? `Add Amt By virtual A/C / NEFT / ${item.utr}`
-                          : item.mode === "RTGS"
-                            ? `Add Amt By virtual A/C / RTGS / ${item.utr}`
-                            : item.mode === "CASH CREDIT"
-                              ? `Admin - Add Fund - ${item.Sender_receiver_info}`
-                              : item.mode === "CASH DEBIT"
-                                ? `Admin - Deduct Fund - ${item.Sender_receiver_info}`
-                                : item.Sender_receiver_info
+              item.type === "payout" && item.status !== "REFUNDED"
+            ? item.transactionReferenceNo
+              ? `Payout First / ${item.transactionReferenceNo} / ${item.id}`
+              : item.errorMessage && item.errorMessage.includes(":")
+                ? `Payout First / ${item.errorMessage.split(":")[1]?.trim()} / ${item.id}`
+                : `Payout First / ${item.errorMessage ? item.errorMessage : "PENDING"} / ${item.id}`
+            : item.type === "payout" && item.status === "REFUNDED"
+              ? `Payout Refunded / ${item.paymentDescription} / ${item.transactionID}`
+              : item.type === "HDFC_VA"
+                ? (() => {
+                  // 🔹 Extract method from transactionDesc before "payment"
+                  let method = item.transactionDesc?.split(" ")[0] || "UNKNOWN";
+                  return `Add Amt By ${method} / ${item.userReferenceNumber}`;
+                })()
+                : item.mode === "UPI"
+                  ? `Add Amt By UPI / ${item.utr}`
+                  : item.mode === "IMPS"
+                    ? `Add Amt By virtual A/C / IMPS / ${item.Sender_receiver_info?.split("/")[1]}`
+                    : item.mode === "NEFT"
+                      ? `Add Amt By virtual A/C / NEFT / ${item.utr}`
+                      : item.mode === "RTGS"
+                        ? `Add Amt By virtual A/C / RTGS / ${item.utr}`
+                        : item.mode === "CASH CREDIT"
+                          ? `Admin - Add Fund - ${item.Sender_receiver_info}`
+                          : item.mode === "CASH DEBIT"
+                            ? `Admin - Deduct Fund - ${item.Sender_receiver_info}`
+                            : item.Sender_receiver_info
 
               }
             </Text>

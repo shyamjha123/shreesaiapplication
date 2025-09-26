@@ -9,7 +9,7 @@ const Funding = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         
         <CommonCards
-          onPress={() => router.push("/AddFundrequest", { customTitle: "My Payout History" })}
+          onPress={() => router.push("/AddFundrequest")}
           iconname={"wallet-outline"}
           color={"#007BB5"}
           text={"Add Fund Request"}
